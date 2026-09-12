@@ -1,0 +1,50 @@
+{
+  "name": "iran-estehlal",
+  "version": "1.0.0",
+  "description": "Iranian (Estehlal) Hijri lunar calendar conversion, with an optional pluggable fallback for dates outside the Iranian dataset.",
+  "keywords": [
+    "hijri",
+    "islamic-calendar",
+    "iran",
+    "estehlal",
+    "lunar-calendar",
+    "calendar",
+    "date-conversion",
+    "jalali",
+    "persian"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=16"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run typecheck && npm run test && npm run build"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
