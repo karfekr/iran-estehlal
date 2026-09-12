@@ -19,6 +19,7 @@
     "url": "https://nedamani.ir"
   },
   "type": "module",
+  "packageManager": "pnpm@12.4.1+sha512.2e81e399d73fe8390dab25e06aa788ab7a5908248d2f5a370f82b481147a6a7a367bf8048f9a6fdb6460f21a66f0542dedb8b94ca2c8723596741920b1656d4c",
   "sideEffects": false,
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -44,12 +45,23 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
+    "format": "biome format --write .",
+    "lint": "biome check --write .",
+    "prepare": "simple-git-hooks",
     "prepublishOnly": "npm run typecheck && npm run test && npm run build"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.13",
+    "simple-git-hooks": "^2.14.0",
+    "@commitlint/cli": "^21.2.2",
+    "@commitlint/config-conventional": "^21.2.2",
     "tsdown": "^0.23.0",
     "typescript": "^7.0.2",
     "vitest": "^5.0.0"
   },
-  "packageManager": "pnpm@12.4.1+sha512.2e81e399d73fe8390dab25e06aa788ab7a5908248d2f5a370f82b481147a6a7a367bf8048f9a6fdb6460f21a66f0542dedb8b94ca2c8723596741920b1656d4c"
+  "simple-git-hooks": {
+    "pre-commit": "pnpm run lint",
+    "commit-msg": "pnpm exec commitlint --edit $1",
+    "pre-push": "pnpm run build && pnpm run test"
+  }
 }

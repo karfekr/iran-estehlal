@@ -1,0 +1,55 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100,
+    "lineEnding": "lf"
+  },
+  "linter": {
+    "rules": {
+      "complexity": { "noArguments": "error" },
+      "correctness": {
+        "noConstAssign": "off",
+        "noGlobalObjectCalls": "off",
+        "noInvalidBuiltinInstantiation": "off",
+        "noInvalidConstructorSuper": "off",
+        "noSetterReturn": "off",
+        "noUndeclaredVariables": "off",
+        "noUnreachable": "off",
+        "noUnreachableSuper": "off"
+      },
+      "style": { "useConst": "error", "useSpreadOverApply": "error" },
+      "suspicious": {
+        "noClassAssign": "off",
+        "noDuplicateClassMembers": "off",
+        "noDuplicateObjectKeys": "off",
+        "noDuplicateParameters": "off",
+        "noFunctionAssign": "off",
+        "noImportAssign": "off",
+        "noRedeclare": "off",
+        "noUnsafeNegation": "off",
+        "noVar": "error",
+        "noWith": "off",
+        "useGetterReturn": "off"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "semicolons": "always",
+      "trailingCommas": "all"
+    }
+  },
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  }
+}
