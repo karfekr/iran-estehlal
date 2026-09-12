@@ -1,33 +1,24 @@
+<div dir="ltr" align="center">
+
+[****فارسی**](README_FA.md) / [**English**](README.md)
+
+</div>
+
 # iran-estehlal
 
-A small, dependency-free implementation of the **Iranian Hijri lunar calendar**
-("Estehlal" — Iran's Crescent Committee observation basis), with conversions
-to and from the Gregorian calendar.
+* ****Iranian calendar data only.**** No data from Umm al-Qura or any other tabular/calculated Islamic calendars is included in the package or implicitly substituted.
 
-This package implements **only** the Iranian dataset. It does not implement,
-bundle, or depend on Umm al-Qura or any other Hijri calendar system. If you
-need dates outside the Iranian dataset's coverage, you plug in your own
-month-length source through a single, minimal fallback function — this
-package never chooses one for you.
+* ****Zero runtime dependencies.**** All Gregorian date calculations are performed internally using exact arithmetic; without using the `Date` object, without timezone or daylight saving time (DST) ambiguity, and without relying on another calendar library.
 
-- **Iranian dataset only.** No Umm al-Qura, no other tabular/arithmetic Hijri
-  calendar is bundled or silently substituted.
-- **Zero runtime dependencies.** All Gregorian date arithmetic is implemented
-  internally with pure integer math — no `Date` object, no timezone or DST
-  ambiguity, no other calendar library.
-- **Fast, regardless of distance from the anchor.** Dataset-covered
-  conversions are answered with a binary search over a precomputed table,
-  not a month-by-month walk — a request for a date from 1962 costs the same
-  as a request for a date from 2026.
-- **TypeScript-first**, fully typed, tree-shakeable, and tiny.
+* ****Performance independent of the distance from the reference point.**** Dates within the data range are converted using binary search over a precomputed table rather than month-by-month iteration. Therefore, converting a date in 1962 takes roughly the same amount of time as converting a date in 2026.
 
-## Install
+## Installation
 
 ```sh
 npm install iran-estehlal
 ```
 
-## Quick start
+## Quick Start
 
 ```ts
 import { createIranEstehlal } from "iran-estehlal";
@@ -35,133 +26,106 @@ import { createIranEstehlal } from "iran-estehlal";
 const calendar = createIranEstehlal();
 
 calendar.gregorianToHijri(2026, 3, 20);
+
 // { hy: 1447, hm: 9, hd: 30 }
 
 calendar.hijriToGregorian(1447, 9, 30);
+
 // { gy: 2026, gm: 3, gd: 20 }
 
 calendar.getMonthLength(1447, 9);
+
 // 30
 ```
 
-Create one instance and reuse it for the lifetime of your application —
-it caches internal lookups and, if you provide a fallback, caches its
-results too.
+## Iranian Calendar Data and the Meaning of "Unsupported"
 
-## The Iranian dataset, and what "unsupported" means
+The Iranian Hijri month-length dataset (stored in `IRAN_HIJRI_MONTHS` and derived from data provided by Iran's Hilal Observation Committee) currently covers Hijri years ****1340 through the current Hijri year****.
 
-The Iranian Hijri month-length dataset (bundled in `IRAN_HIJRI_MONTHS`,
-sourced from Iran's Crescent Committee data) currently covers Hijri years
-1340 through 1448, with 1448 only known through its 10th month. That trailing
-partial year is not padded out or guessed at — asking for a month beyond
-what the dataset actually lists returns `null`, exactly as if that year
-didn't appear in the dataset at all:
+The incomplete year at the end of the dataset is neither filled with assumed values nor are the remaining months guessed. If a month beyond the available data is requested, `null` is returned, exactly as if that year did not exist in the dataset at all:
 
 ```ts
 const calendar = createIranEstehlal();
 
-calendar.getMonthLength(1448, 10); // 29  (last month the dataset knows)
-calendar.getMonthLength(1448, 11); // null (not in the dataset, no fallback)
+calendar.getMonthLength(1600, 11);
+
+// null
 ```
 
-The Iranian dataset is always authoritative where it applies. It is never
-overridden, and a fallback is never consulted for a month the dataset
-already covers — even if the fallback would disagree.
+## Extending Coverage with a Fallback
 
-## Extending coverage with a fallback
+If you need to work with dates outside the range covered by the Iranian calendar data, you can provide a fallback function when creating the calendar. This function only needs to answer one question: "How many days are in the Hijri month `(hy, hm)`?"
 
-If you need dates outside the Iranian dataset, provide a fallback function
-when you create the calendar. It answers exactly one question — "how many
-days does Hijri month `(hy, hm)` have?" — and nothing else:
+The `iran-estehlal` package does not care what your fallback is based on. It can use another calendar library, an online API, or even a manually created table.
 
-```ts
-type MonthLengthFallback = (hy: number, hm: number) => 29 | 30 | null;
-```
-
-`iran-estehlal` doesn't know or care what backs your fallback. It could be
-Umm al-Qura, another arithmetic Hijri calendar, a remote API, or a hand-
-rolled table:
+For example, you can use [`@internationalized/date`](https://react-spectrum.adobe.com/internationalized/date/):
 
 ```ts
 import { createIranEstehlal } from "iran-estehlal";
-// Any Umm al-Qura implementation of your choosing - this package doesn't
-// provide or depend on one.
-import { getUmmAlQuraMonthLength } from "some-umm-al-qura-library";
 
-const calendar = createIranEstehlal((hy, hm) => getUmmAlQuraMonthLength(hy, hm) ?? null);
+import { CalendarDate, createCalendar } from "@internationalized/date";
 
-calendar.getMonthLength(1500, 1); // whatever your fallback reports
-calendar.hijriToGregorian(1500, 1, 1); // computed using the fallback's month lengths
+const umalqura = createCalendar("islamic-umalqura");
+
+function getUmmAlQuraMonthLength(hy: number, hm: number): 29 | 30 {
+  const date = new CalendarDate(umalqura, hy, hm, 1);
+  return umalqura.getDaysInMonth(date) as 29 | 30;
+}
+
+const calendar = createIranEstehlal(getUmmAlQuraMonthLength);
 ```
 
-The fallback is only ever asked about months the Iranian dataset doesn't
-cover, and each answer is cached — your fallback will never be asked about
-the same month twice from the same calendar instance. Returning `null` from
-the fallback means "I don't know this month either," which `iran-estehlal`
-treats the same as not having a fallback at all for that month (the overall
-result is `null`, not an error).
+Note that the fallback is only used for months not covered by the Iranian calendar data, and each result is cached.
 
-Returning anything other than `29`, `30`, or `null` from a fallback is
-treated as a programming error and throws — a fallback silently returning,
-say, `31` would quietly corrupt every conversion downstream of it.
+Since lunar calendars based on the observation of the new moon do not have months with `28` or `31` days.
 
-## API
+If the fallback returns anything other than `29`, `30`, or `null`, this is considered a programming error and an exception is thrown.
 
-### `createIranEstehlal(fallback?)`
-
-Creates a calendar instance. `fallback` is optional; without one, any date
-requiring month data outside the Iranian dataset resolves to `null`.
+## Details
 
 ### `calendar.getMonthLength(hy, hm)`
 
-Returns `29 | 30 | null`. Iranian dataset first, then the fallback (if any),
-then `null`. Throws `RangeError` if `hm` isn't an integer from 1 to 12.
+Returns the length of the month as `29 | 30 | null`.
+
+Lookup order:
+
+1. Iranian calendar data
+2. Fallback, if provided
+
+If `hm` is not an integer between 1 and 12, a `RangeError` is thrown.
 
 ### `calendar.gregorianToHijri(gy, gm, gd)`
 
-Returns the equivalent `{ hy, hm, hd }`, or `null` if it would require
-month data neither the dataset nor the fallback can supply. Throws
-`RangeError` for an invalid Gregorian date.
+Converts a Gregorian date to the Iranian Hilal Observation Committee's Hijri calendar and returns `{ hy, hm, hd }`.
+
+A `RangeError` is thrown if the Gregorian date is invalid.
 
 ### `calendar.hijriToGregorian(hy, hm, hd)`
 
-Returns the equivalent `{ gy, gm, gd }`, or `null` for the same reason as
-above. Throws `RangeError` for an invalid Hijri month, a non-positive or
-non-integer day, or a day that exceeds the actual length of that month
-(e.g. day 30 of a 29-day month) — that is a genuinely invalid date, distinct
-from a valid-but-unsupported one, and is never silently accepted.
+Converts a Hijri date to a Gregorian date and returns `{ gy, gm, gd }`.
 
-## Design notes
+A `RangeError` is thrown if:
 
-**Efficient by construction, not by accident.** Internally, every Hijri
-`(year, month)` is folded into one increasing integer key, and the Iranian
-dataset's contiguous coverage around the anchor is turned into a prefix-sum
-table once, at calendar-creation time. Both conversion directions then
-resolve any date inside the dataset with a binary search over that table —
-so a request for 1340 costs the same as a request for 2026, regardless of
-how far either is from the anchor. Dates outside the dataset can only be
-resolved by asking the fallback one month at a time (there's no closed form
-for an arbitrary user-supplied function), so that path grows two small
-caches on demand instead — cheap for nearby repeated requests, and it never
-asks the fallback about the same month twice.
+* the Hijri month is invalid;
+* the day is zero or negative;
+* the day is not an integer;
+* the day exceeds the actual length of the month.
 
-**A note on `core.ts` compatibility.** This package's dataset, anchor, and
-conversion semantics were derived from `obsidian-persian-calendar`'s
-`hijriUtils/core.ts`, and `gregorianToHijri` matches it exactly across
-extensive fuzz testing. While building this package, a genuine bug turned
-up in that file's `hijriIranToGregorian`, specifically in its forward
-(post-anchor) branch: it sums the *full* length of the anchor's own month
-instead of only the days remaining in it after the anchor's day-of-month,
-which silently shifts every post-anchor, month-crossing conversion by
-however many days that month runs past the anchor's day. Since the bundled
-anchor sits on day 30 of a 30-day month, this bug happens not to fire for
-same-month lookups, but does affect essentially every other forward,
-month-crossing call - for instance, the original code returns `2026-04-19`
-for Hijri `1447/10/01`, a full month off; the correct value, `2026-03-21`,
-is confirmed independently both by direct day-counting and by that same
-file's own (differently structured, unaffected) `gregorianToHijriIran`
-function. `iran-estehlal` implements the mathematically correct conversion
-rather than reproducing that specific bug; every other aspect of `core.ts`'s
-observable behavior (the dataset, the anchor, `gregorianToHijri`, and
-`hijriIranToGregorian`'s same-month and backward-branch results) is
-preserved exactly.
+For example, day 30 of a 29-day month is a ****genuinely invalid date**** and is different from a valid date that simply falls outside the available data range. Such a date is never silently accepted.
+
+## 🤝 Contributing and Supporting
+
+You can support the continued development of this project in the following ways:
+
+* Contribute directly to the project
+* Report bugs or suggest new features
+* Follow the Karfekr website and Telegram channels
+
+
+<div align=center>
+
+[![Website](https://img.shields.io/badge/Website-karfekr.ir-orange)](https://karfekr.ir)
+[![Telegram Channel](https://img.shields.io/endpoint?color=neon&label=Karfekr&style=flat-square&url=https%3A%2F%2Ftg.sumanjay.workers.dev%2Fkarfekr)](https://t.me/karfekr)
+
+</div>
+
